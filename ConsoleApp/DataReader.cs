@@ -6,6 +6,8 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using CsvHelper;
+    using System.Globalization;
 
     public class DataReader
     {
@@ -13,31 +15,11 @@
 
         public void ImportAndPrintData(string fileToImport, bool printData = true)
         {
-            ImportedObjects = new List<ImportedObject>() { new ImportedObject() };
-
-            var streamReader = new StreamReader(fileToImport);
-
-            var importedLines = new List<string>();
-            while (!streamReader.EndOfStream)
-            {
-                var line = streamReader.ReadLine();
-                importedLines.Add(line);
-            }
-
-            for (int i = 0; i <= importedLines.Count; i++)
-            {
-                var importedLine = importedLines[i];
-                var values = importedLine.Split(';');
-                var importedObject = new ImportedObject();
-                importedObject.Type = values[0];
-                importedObject.Name = values[1];
-                importedObject.Schema = values[2];
-                importedObject.ParentName = values[3];
-                importedObject.ParentType = values[4];
-                importedObject.DataType = values[5];
-                importedObject.IsNullable = values[6];
-                ((List<ImportedObject>)ImportedObjects).Add(importedObject);
-            }
+            var lines = File.ReadAllLines(fileToImport);
+            ImportedObjects = lines.Skip(1)
+                .Select(l => l.Split(';'))
+                .Select(l => new ImportedObject(l))
+                .ToList();
 
             // clear and correct imported data
             foreach (var importedObject in ImportedObjects)
@@ -46,20 +28,20 @@
                 importedObject.Name = importedObject.Name.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
                 importedObject.Schema = importedObject.Schema.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
                 importedObject.ParentName = importedObject.ParentName.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
-                importedObject.ParentType = importedObject.ParentType.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
+                importedObject.ParentType = importedObject.ParentType.Trim().Replace(" ", "").Replace(Environment.NewLine, "").ToUpper(); ;
             }
 
             // assign number of children
             for (int i = 0; i < ImportedObjects.Count(); i++)
             {
-                var importedObject = ImportedObjects.ToArray()[i];
+                var parentObj = ImportedObjects.ElementAt(i);
                 foreach (var impObj in ImportedObjects)
                 {
-                    if (impObj.ParentType == importedObject.Type)
+                    if (impObj.ParentType == parentObj.Type)
                     {
-                        if (impObj.ParentName == importedObject.Name)
+                        if (impObj.ParentName == parentObj.Name)
                         {
-                            importedObject.NumberOfChildren = 1 + importedObject.NumberOfChildren;
+                            parentObj.NumberOfChildren++;
                         }
                     }
                 }
@@ -103,11 +85,6 @@
 
     class ImportedObject : ImportedObjectBaseClass
     {
-        public string Name
-        {
-            get;
-            set;
-        }
         public string Schema;
 
         public string ParentName;
@@ -120,6 +97,16 @@
         public string IsNullable { get; set; }
 
         public double NumberOfChildren;
+        public ImportedObject(string[] line)
+        {
+            this.Type = line.ElementAtOrDefault(0) ?? string.Empty;
+            this.Name = line.ElementAtOrDefault(1) ?? string.Empty;
+            this.Schema = line.ElementAtOrDefault(2) ?? string.Empty;
+            this.ParentName = line.ElementAtOrDefault(3) ?? string.Empty;
+            this.ParentType = line.ElementAtOrDefault(4) ?? string.Empty;
+            this.DataType = line.ElementAtOrDefault(5) ?? string.Empty;
+            this.IsNullable = line.ElementAtOrDefault(6) ?? string.Empty;
+        }
     }
 
     class ImportedObjectBaseClass

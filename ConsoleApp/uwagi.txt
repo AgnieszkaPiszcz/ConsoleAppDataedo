@@ -1,0 +1,19 @@
+﻿ogólne
+1. Kod przesłany do review powinien osiągnąć pewien standard, tj. nie powinien mieć literówek i generalnie nie powinien się od razu wywalać.
+
+plik DataReader:
+1. Do obsługi csv można użyć gotowych rozwiązań - w zależności od dalszego kierunku rozwoju programu.
+2. ImportedObjectBaseClass oraz ImportedObject mają property o nazwie Name, więc występuje, jak domyślam się 
+i ja, i Visual Studio, niezamierzone przykrywanie nazwy pola. 
+3. Zamiast StreamReader wygodniej użyć funkcji File.ReadAllLines(), która sama otwiera, wczytuje i zamyka plik.
+4. Bardziej zwięźle i elegancko można utworzyć obiekty dodając konkstruktor przyjmujący string[]
+oraz używając składni Linq.
+5. We fragmencie // assign number of children linia var importedObject = ImportedObjects.ToArray()[i];
+z każdą iteracją tworzy array, co jest niepotrzebne. Wystarczy pobrać element z indeksem i:
+var importedObject = ImportedObjects.ElementAt(i);
+6. We fragmencie // clear and correct imported data, żeby zliczanie dzieci działało Type oraz Parent type 
+muszą być oba pisane albo małymi, albo duzymi literami.
+7. Parametr printData jest nieużywany.
+
+plik Program.cs:
+1. Literówka w nazwie pliku - powinno być data.csv
